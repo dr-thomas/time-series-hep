@@ -1,3 +1,4 @@
 diffplot.go
 subfig.go
 .DS_Store
+testdata/timeseries_bias.png
