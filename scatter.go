@@ -17,11 +17,6 @@ import (
 	"go-hep.org/x/hep/hplot"
 )
 
-var shadeColor = []color.Color{
-	color.RGBA{R: 255, G: 255, B: 255, A: 255}, // white for the bottom
-	color.RGBA{A: 50},                          // actual shade color
-}
-
 func main() {
 
 	// Create a normal distribution.
@@ -34,8 +29,8 @@ func main() {
 	// Create data and highway
 	nData := 1000
 	data := make(plotter.XYs, nData)
-	hwyHigh := make(plotter.XYs, nData)
-	hwyLow := make(plotter.XYs, nData)
+	threshHigh := make(plotter.XYs, nData)
+	threshLow := make(plotter.XYs, nData)
 	bias := make(plotter.XYs, nData)
 	for ii := range data {
 		data[ii].X = float64(ii)
@@ -43,17 +38,17 @@ func main() {
 		if ii < 20 {
 			continue
 		}
-		hwyHigh[ii].X = float64(ii)
-		hwyLow[ii].X = float64(ii)
-		hwyHigh[ii].Y = dist.Mu + 3.*dist.Sigma
-		hwyLow[ii].Y = dist.Mu - 3.*dist.Sigma
+		threshHigh[ii].X = float64(ii)
+		threshLow[ii].X = float64(ii)
+		threshHigh[ii].Y = dist.Mu + 3.*dist.Sigma
+		threshLow[ii].Y = dist.Mu - 3.*dist.Sigma
 		if ii > 800 {
-			hwyHigh[ii].Y += (float64(ii) - 800.) / 100
-			hwyLow[ii].Y += (float64(ii) - 800.) / 100
+			threshHigh[ii].Y += (float64(ii) - 800.) / 100
+			threshLow[ii].Y += (float64(ii) - 800.) / 100
 		}
 		bias[ii].X = float64(ii)
-		center := (hwyHigh[ii].Y + hwyLow[ii].Y) / 2.
-		width := (hwyHigh[ii].Y - hwyLow[ii].Y) / 2.
+		center := (threshHigh[ii].Y + threshLow[ii].Y) / 2.
+		width := (threshHigh[ii].Y - threshLow[ii].Y) / 2.
 		if width > 0. {
 			bias[ii].Y = (data[ii].Y - center) / width
 		} else {
@@ -69,30 +64,24 @@ func main() {
 	p1.Y.Label.Text = "value"
 	p1.X.Tick.Marker = hplot.NoTicks{}
 
-	// Draw high
-	lineHigh, _, err := plotter.NewLinePoints(hwyHigh)
-	if err != nil {
-		log.Panic(err)
+	// Draw threshold
+	polyPts := make(plotter.XYs, 0, 2*nData)
+	polyPts = append(polyPts, threshHigh...)
+	//add points for low in backwards
+	for ii := range threshLow {
+		polyPts = append(polyPts, threshLow[len(threshLow)-ii-1])
 	}
-	lineHigh.Color = color.RGBA{A: 0}
-	lineHigh.ShadeColor = &shadeColor[1]
-	p1.Add(lineHigh)
 
-	// Draw low
-	lineLow, _, err := plotter.NewLinePoints(hwyLow)
-	if err != nil {
-		log.Panic(err)
-	}
-	lineLow.Color = color.RGBA{A: 0}
-	lineLow.ShadeColor = &shadeColor[0]
-	p1.Add(lineLow)
+	poly, err := plotter.NewPolygon(polyPts)
+	poly.Color = color.RGBA{B: 200, A: 20}
+	poly.LineStyle.Color = color.RGBA{A: 0}
 
 	// Draw data
 	line, _, err := plotter.NewLinePoints(data)
 	if err != nil {
 		log.Panic(err)
 	}
-	line.Color = color.RGBA{G: 155, B: 100, R: 50, A: 255}
+	line.Color = color.RGBA{G: 55, B: 200, R: 50, A: 255}
 	p1.Add(line)
 
 	// Create lower plot
@@ -138,6 +127,7 @@ func main() {
 		},
 	}
 	p1.Draw(top)
+	poly.Plot(p1.DataCanvas(top), p1.Plot)
 
 	bottom := draw.Canvas{
 		Canvas: dc,
