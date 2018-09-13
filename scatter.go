@@ -19,7 +19,7 @@ import (
 
 var shadeColor = []color.Color{
 	color.RGBA{R: 255, G: 255, B: 255, A: 255}, // white for the bottom
-	color.RGBA{B: 200, A: 50},                  // actual shade color
+	color.RGBA{A: 50},                          // actual shade color
 }
 
 func main() {
@@ -40,6 +40,9 @@ func main() {
 	for ii := range data {
 		data[ii].X = float64(ii)
 		data[ii].Y = dist.Rand()
+		if ii < 20 {
+			continue
+		}
 		hwyHigh[ii].X = float64(ii)
 		hwyLow[ii].X = float64(ii)
 		hwyHigh[ii].Y = dist.Mu + 3.*dist.Sigma
@@ -67,37 +70,30 @@ func main() {
 	p1.X.Tick.Marker = hplot.NoTicks{}
 
 	// Draw high
-	lineHigh, pointsHigh, err := plotter.NewLinePoints(hwyHigh)
+	lineHigh, _, err := plotter.NewLinePoints(hwyHigh)
 	if err != nil {
 		log.Panic(err)
 	}
-
 	lineHigh.Color = color.RGBA{A: 0}
-	pointsHigh.Color = color.RGBA{A: 0}
 	lineHigh.ShadeColor = &shadeColor[1]
-	p1.Add(lineHigh, pointsHigh)
+	p1.Add(lineHigh)
 
 	// Draw low
-	lineLow, pointsLow, err := plotter.NewLinePoints(hwyLow)
+	lineLow, _, err := plotter.NewLinePoints(hwyLow)
 	if err != nil {
 		log.Panic(err)
 	}
-
 	lineLow.Color = color.RGBA{A: 0}
-	pointsLow.Color = color.RGBA{A: 0}
 	lineLow.ShadeColor = &shadeColor[0]
-	p1.Add(lineLow, pointsLow)
+	p1.Add(lineLow)
 
 	// Draw data
-	line, points, err := plotter.NewLinePoints(data)
+	line, _, err := plotter.NewLinePoints(data)
 	if err != nil {
 		log.Panic(err)
 	}
-
-	line.Color = color.RGBA{G: 155, B: 155, R: 50, A: 255}
-	points.Color = color.RGBA{A: 0}
-
-	p1.Add(line, points)
+	line.Color = color.RGBA{G: 155, B: 100, R: 50, A: 255}
+	p1.Add(line)
 
 	// Create lower plot
 	p2 := hplot.New()
@@ -120,15 +116,12 @@ func main() {
 	p2.Y.Max = max
 
 	// Draw bias
-	lineBias, pointsBias, err := plotter.NewLinePoints(bias)
+	lineBias, _, err := plotter.NewLinePoints(bias)
 	if err != nil {
 		log.Panic(err)
 	}
-
 	lineBias.Color = color.RGBA{G: 50, B: 155, R: 155, A: 255}
-	pointsBias.Color = color.RGBA{A: 0}
-
-	p2.Add(lineBias, pointsBias)
+	p2.Add(lineBias)
 
 	const (
 		width  = 40 * vg.Centimeter
