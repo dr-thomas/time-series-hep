@@ -6,55 +6,27 @@ import (
 	"math"
 	"os"
 
-	"golang.org/x/exp/rand"
-
-	"gonum.org/v1/gonum/stat/distuv"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
 
 	"go-hep.org/x/hep/hplot"
+
+	"hepPlot/analysis"
 )
 
 func main() {
 
-	// Create a normal distribution.
-	dist := distuv.Normal{
-		Mu:    0,
-		Sigma: 1,
-		Src:   rand.New(rand.NewSource(0)),
-	}
-
-	// Create data and highway
+	// Generate Data
 	nData := 1000
-	data := make(plotter.XYs, nData)
-	threshHigh := make(plotter.XYs, nData)
-	threshLow := make(plotter.XYs, nData)
-	bias := make(plotter.XYs, nData)
-	for ii := range data {
-		data[ii].X = float64(ii)
-		data[ii].Y = dist.Rand()
-		if ii < 20 {
-			continue
-		}
-		threshHigh[ii].X = float64(ii)
-		threshLow[ii].X = float64(ii)
-		threshHigh[ii].Y = dist.Mu + 3.*dist.Sigma
-		threshLow[ii].Y = dist.Mu - 3.*dist.Sigma
-		if ii > 800 {
-			threshHigh[ii].Y += (float64(ii) - 800.) / 100
-			threshLow[ii].Y += (float64(ii) - 800.) / 100
-		}
-		bias[ii].X = float64(ii)
-		center := (threshHigh[ii].Y + threshLow[ii].Y) / 2.
-		width := (threshHigh[ii].Y - threshLow[ii].Y) / 2.
-		if width > 0. {
-			bias[ii].Y = (data[ii].Y - center) / width
-		} else {
-			bias[ii].Y = (data[ii].Y - center)
-		}
-	}
+	data := analysis.GenGauss(0., 1., nData)
+
+	// analysis
+	lookback := 100
+	smoothStrn := 0.95
+	thresh := analysis.CalcThresholdSMA(data, lookback, smoothStrn)
+	bias := analysis.CalcBias(data, thresh)
 
 	// Create plot
 	p1 := hplot.New()
@@ -66,10 +38,12 @@ func main() {
 
 	// Draw threshold
 	polyPts := make(plotter.XYs, 0, 2*nData)
-	polyPts = append(polyPts, threshHigh...)
+	//polyPts = append(polyPts, threshHigh...)
+	polyPts = append(polyPts, thresh.High...)
 	//add points for low in backwards
-	for ii := range threshLow {
-		polyPts = append(polyPts, threshLow[len(threshLow)-ii-1])
+	//for ii := range threshLow {
+	for ii := range thresh.Low {
+		polyPts = append(polyPts, thresh.Low[len(thresh.Low)-ii-1])
 	}
 
 	poly, err := plotter.NewPolygon(polyPts)
