@@ -6,12 +6,11 @@ import (
 	"math"
 	"os"
 
+	"go-hep.org/x/hep/hplot"
 	"gonum.org/v1/plot/plotter"
 	"gonum.org/v1/plot/vg"
 	"gonum.org/v1/plot/vg/draw"
 	"gonum.org/v1/plot/vg/vgimg"
-
-	"go-hep.org/x/hep/hplot"
 
 	"hepPlot/analysis"
 )
@@ -20,7 +19,8 @@ func main() {
 
 	// Generate Data
 	nData := 1000
-	data := analysis.GenGaussStep(0., 1., 2., nData)
+	//data := analysis.GenGaussStep(0., 1., 2., nData)
+	data := analysis.GenLinGauss(25.e-3, 0., 0, 1., nData)
 
 	// analysis
 	lookback := 100
@@ -29,6 +29,7 @@ func main() {
 	bias := analysis.CalcBias(data, thresh)
 
 	// Create plot
+	//TODO: need auto scaling axis here
 	p1 := hplot.New()
 	p1.Title.Text = "Time Series"
 	p1.Y.Min = -5.
