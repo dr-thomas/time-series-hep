@@ -20,7 +20,7 @@ func main() {
 
 	// Generate Data
 	nData := 1000
-	data := analysis.GenGauss(0., 1., nData)
+	data := analysis.GenGaussStep(0., 1., 2., nData)
 
 	// analysis
 	lookback := 100
@@ -34,14 +34,12 @@ func main() {
 	p1.Y.Min = -5.
 	p1.Y.Max = 5.
 	p1.Y.Label.Text = "value"
-	p1.X.Tick.Marker = hplot.NoTicks{}
+	p1.X.Tick.Label.Color = color.RGBA{A: 0}
 
 	// Draw threshold
 	polyPts := make(plotter.XYs, 0, 2*nData)
-	//polyPts = append(polyPts, threshHigh...)
 	polyPts = append(polyPts, thresh.High...)
 	//add points for low in backwards
-	//for ii := range threshLow {
 	for ii := range thresh.Low {
 		polyPts = append(polyPts, thresh.Low[len(thresh.Low)-ii-1])
 	}
@@ -56,7 +54,9 @@ func main() {
 		log.Panic(err)
 	}
 	line.Color = color.RGBA{G: 55, B: 200, R: 50, A: 255}
+
 	p1.Add(line)
+	p1.Add(hplot.NewGrid())
 
 	// Create lower plot
 	p2 := hplot.New()
